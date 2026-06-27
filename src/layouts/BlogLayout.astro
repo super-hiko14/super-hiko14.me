@@ -7,9 +7,41 @@ export interface Props {
     date: string;
     category?: string;
   };
+  rawContent?: () => string;
 }
 
 const { title, date, category } = Astro.props.frontmatter;
+
+// 読了時間（日本語 約500字/分）
+const rawText = Astro.props.rawContent?.() ?? '';
+const readingMinutes = Math.max(1, Math.ceil(
+  rawText.replace(/[\s\n]/g, '').length / 500
+));
+
+// 前後のブログ記事を自動取得
+interface PostFM { title: string; date: string; category?: string; }
+const postModules = import.meta.glob<{ frontmatter: PostFM }>(
+  '../pages/blog/*.md',
+  { eager: true }
+);
+
+const sorted = Object.entries(postModules)
+  .filter(([, mod]) => mod.frontmatter?.title)
+  .map(([path, mod]) => {
+    const match = path.match(/\/([^/]+)\.md$/);
+    const slug = match?.[1] ?? '';
+    return { frontmatter: mod.frontmatter, url: `/blog/${slug}/` };
+  })
+  .sort((a, b) => {
+    const dA = (a.frontmatter.date || '').replace(/\./g, '-');
+    const dB = (b.frontmatter.date || '').replace(/\./g, '-');
+    return dA < dB ? 1 : dA > dB ? -1 : 0;
+  });
+
+const currentPath = Astro.url.pathname.replace(/\/$/, '');
+const idx = sorted.findIndex(p => p.url.replace(/\/$/, '') === currentPath);
+const prevPost = idx >= 0 && idx < sorted.length - 1 ? sorted[idx + 1] : null;
+const nextPost = idx > 0 ? sorted[idx - 1] : null;
 ---
 
 <!DOCTYPE html>
@@ -21,11 +53,12 @@ const { title, date, category } = Astro.props.frontmatter;
     <meta name="description" content={title}>
     <link rel="icon" href="https://super-hiko14.me/favicon.ico">
     <link rel="icon" type="image/png" href="https://super-hiko14.me/favicon.png">
-    <link rel="stylesheet" href="https://super-hiko14.com/main.css">
-    <script src="https://super-hiko14.com/main.js"></script>
+    <link rel="stylesheet" href="/main.css">
+    <script src="/main.js" is:inline></script>
   </head>
 
   <body>
+    <div class="blog-reading-progress" id="blog-reading-progress" aria-hidden="true"></div>
     <!-- ナビゲーション -->
     <nav class="site-nav" aria-label="サイトナビゲーション">
       <button class="site-nav-toggle" aria-label="メニューを開く" aria-expanded="false">
@@ -41,20 +74,28 @@ const { title, date, category } = Astro.props.frontmatter;
       <!-- 通常の .box より広い専用ボックス -->
       <div class="box blog-post-box">
 
-        <!-- パンくずリスト -->
-        <nav class="blog-breadcrumb" aria-label="パンくずリスト">
-          <a href="/">Home</a>
-          &nbsp;/&nbsp;
-          <a href="/blog/">Blog</a>
-          &nbsp;/&nbsp;
-          <span>{title}</span>
-        </nav>
+        <!-- Blog一覧へ戻るリンク -->
+        <a href="/blog/" class="blog-back-link" aria-label="Blog 一覧へ戻る">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Blog 一覧
+        </a>
 
         <!-- 記事ヘッダー -->
         <div class="blog-post-header">
-          {category && <span class="blog-item-category">{category}</span>}
+          <div class="blog-post-meta">
+            {category && <span class="blog-item-category">{category}</span>}
+            <span class="blog-item-date">{date}</span>
+            <span class="blog-reading-time" aria-label={`読了時間 約${readingMinutes}分`}>
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              約{readingMinutes}分
+            </span>
+          </div>
           <h1 class="blog-post-title">{title}</h1>
-          <p class="blog-item-date">{date}</p>
         </div>
 
         <!-- 本文 + ToC の 2 カラム -->
@@ -63,12 +104,33 @@ const { title, date, category } = Astro.props.frontmatter;
           <!-- 記事本文 -->
           <div class="blog-post-main">
             <article class="blog-content" id="blog-content">
+              <hr class="blog-content-divider" />
               <slot />
             </article>
 
             <div class="blog-post-footer">
               <a href="/blog/" class="blog-back-btn">← Blog 一覧へ</a>
             </div>
+
+            <!-- 前後の記事ナビ -->
+            {(prevPost || nextPost) && (
+              <nav class="blog-sibling-nav" aria-label="前後の記事">
+                {prevPost && (
+                  <a href={prevPost.url} class="blog-sibling blog-sibling--prev">
+                    <span class="blog-sibling-dir">← 前の記事</span>
+                    <span class="blog-sibling-title">{prevPost.frontmatter.title}</span>
+                    <span class="blog-sibling-date">{prevPost.frontmatter.date}</span>
+                  </a>
+                )}
+                {nextPost && (
+                  <a href={nextPost.url} class="blog-sibling blog-sibling--next">
+                    <span class="blog-sibling-dir">次の記事 →</span>
+                    <span class="blog-sibling-title">{nextPost.frontmatter.title}</span>
+                    <span class="blog-sibling-date">{nextPost.frontmatter.date}</span>
+                  </a>
+                )}
+              </nav>
+            )}
           </div>
 
           <!-- ToC サイドバー（PC） -->
@@ -112,13 +174,16 @@ const { title, date, category } = Astro.props.frontmatter;
     </div>
     </main>
 
-    <!-- スマホ用 ToC ボタン -->
-    <button class="toc-mobile-btn" id="toc-mobile-btn" aria-label="目次を開く">目次 ＜</button>
+    <!-- スマホ用 ToC ボタン（フローティングピル） -->
+    <button class="toc-mobile-btn" id="toc-mobile-btn" aria-label="目次を開く">
+      <span class="toc-mobile-icon" aria-hidden="true">☰</span>
+      目次
+    </button>
 
     <!-- スクリム -->
     <div class="toc-scrim" id="toc-scrim"></div>
 
-    <!-- スマホ用スライドパネル（下から全画面） -->
+    <!-- スマホ用サイドドロワー（右から） -->
     <div class="toc-panel" id="toc-panel" role="dialog" aria-modal="true" aria-label="目次">
       <div class="toc-panel-header">
         <p class="toc-panel-title">目次</p>
@@ -134,8 +199,33 @@ const { title, date, category } = Astro.props.frontmatter;
         content.querySelectorAll<HTMLHeadingElement>('h1, h2, h3, h4')
       );
 
+      const ICON_HASH = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9.5 3L7 21M17 3L14.5 21M4 8.5H20M3 15.5H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.15"/><path d="M7 12.5L10.2 15.7L17 8.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
       headings.forEach((h, i) => {
         if (!h.id) h.id = `toc-h-${i}`;
+
+        // # アンカーリンク（ホバーで表示・クリックでURLコピー）
+        const anchor = document.createElement('a');
+        anchor.className = 'heading-anchor';
+        anchor.href = `#${h.id}`;
+        anchor.innerHTML = ICON_HASH;
+        anchor.setAttribute('aria-hidden', 'true');
+        anchor.setAttribute('tabindex', '-1');
+        anchor.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const url = `${location.origin}${location.pathname}#${h.id}`;
+          try {
+            await navigator.clipboard.writeText(url);
+            anchor.innerHTML = ICON_CHECK;
+            anchor.classList.add('is-copied');
+            setTimeout(() => {
+              anchor.innerHTML = ICON_HASH;
+              anchor.classList.remove('is-copied');
+            }, 1500);
+          } catch {}
+        });
+        h.insertBefore(anchor, h.firstChild);
       });
 
       // ---- 2. ToC リンク生成 ----
@@ -151,9 +241,12 @@ const { title, date, category } = Astro.props.frontmatter;
           a.dataset.id = h.id;
           a.dataset.level = String(level);
 
-          // テキスト
+          // テキスト（アンカー要素を除いた見出しテキストを取得）
           const span = document.createElement('span');
-          span.textContent = h.textContent ?? '';
+          const anchorEl = h.querySelector('.heading-anchor');
+          const cloned = h.cloneNode(true) as HTMLElement;
+          cloned.querySelector('.heading-anchor')?.remove();
+          span.textContent = cloned.textContent?.trim() ?? '';
           a.appendChild(span);
 
           // スマホパネル用：矢印アイコンを追加
@@ -179,39 +272,33 @@ const { title, date, category } = Astro.props.frontmatter;
       buildLinks(document.getElementById('toc-list-pc')!);
       buildLinks(document.getElementById('toc-list-mobile')!, () => closePanel());
 
-// ---- 3. スクロール追従で直近の見出しを1つだけアクティブにする ----
+      // ---- 3. 見出し＋本文が画面に映っているセクションをアクティブにする ----
       const allLinks = document.querySelectorAll<HTMLElement>('.toc-link');
 
       function updateActiveToC() {
-        // 画面の上部からどれくらいの位置を判定基準にするか（ここでは上から100pxの位置）
-        const detectOffset = 100;
-        const scrollPosition = window.scrollY + detectOffset;
+        const scrollY = window.scrollY;
+        const viewportBottom = scrollY + window.innerHeight;
 
-        let activeHeading: HTMLHeadingElement | null = null;
+        const activeIds = new Set<string>();
 
-        // すべての見出しを上から順にチェック
         for (let i = 0; i < headings.length; i++) {
-          const heading = headings[i];
-          // 見出しのページ最上部からの位置を取得
-          const headingTop = heading.getBoundingClientRect().top + window.scrollY;
+          const headingAbsTop = headings[i].getBoundingClientRect().top + scrollY;
+          const nextAbsTop =
+            i + 1 < headings.length
+              ? headings[i + 1].getBoundingClientRect().top + scrollY
+              : document.documentElement.scrollHeight;
 
-          // スクロール位置が、見出しの位置を超えていたら「いま読んでいる最中」の候補にする
-          if (scrollPosition >= headingTop) {
-            activeHeading = heading;
-          } else {
-            // これ以降の見出しはまだ画面より下にあるのでループを抜ける
-            break;
+          if (headingAbsTop < viewportBottom && nextAbsTop > scrollY) {
+            activeIds.add(headings[i].id);
           }
         }
 
-        // もし最初の見出しより上にいる場合は、最初の見出しをアクティブにしておく（お好みで変更可能）
-        if (!activeHeading && headings.length > 0) {
-          activeHeading = headings[0];
+        if (activeIds.size === 0 && headings.length > 0) {
+          activeIds.add(headings[0].id);
         }
 
-        // 全体のクラスを一度消して、選ばれた1つ（PC・スマホ両方）だけを光らせる
         allLinks.forEach((link) => {
-          if (activeHeading && link.dataset.id === activeHeading.id) {
+          if (link.dataset.id && activeIds.has(link.dataset.id)) {
             link.classList.add('is-active');
           } else {
             link.classList.remove('is-active');
@@ -219,15 +306,11 @@ const { title, date, category } = Astro.props.frontmatter;
         });
       }
 
-      // スクロール時と画面読み込み（サイズ変更）時に実行する
       window.addEventListener('scroll', updateActiveToC, { passive: true });
       window.addEventListener('resize', updateActiveToC, { passive: true });
-      
-      // 初回実行
       updateActiveToC();
 
-
-      // ---- 4. スマホ パネル開閉 ----（※ここは以前のコードのまま維持）
+      // ---- 4. スマホ パネル開閉 ----
       const mobileBtn = document.getElementById('toc-mobile-btn')!;
       const panel     = document.getElementById('toc-panel')!;
       const scrim     = document.getElementById('toc-scrim')!;
@@ -260,43 +343,65 @@ const { title, date, category } = Astro.props.frontmatter;
         if (e.key === 'Escape') closePanel();
       });
 
-      // ページの読み込みが終わったら、目次をbody要素の直下に移動する（※これもそのまま維持）
-      document.addEventListener("DOMContentLoaded", function() {
-          const toc = document.querySelector('.toc-sidebar');
-          if (toc) {
-              document.body.appendChild(toc);
-          }
-          // 移動した後に位置判定を1回合わせておく
-          updateActiveToC();
-      });
+      // ---- 5. 読書プログレスバー ----
+      const progressBar = document.getElementById('blog-reading-progress');
+      if (progressBar) {
+        function updateProgress() {
+          const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+          const pct = scrollable > 0 ? (window.scrollY / scrollable) * 100 : 0;
+          (progressBar as HTMLElement).style.width = Math.min(100, pct) + '%';
+        }
+        window.addEventListener('scroll', updateProgress, { passive: true });
+        updateProgress();
+      }
     </script>
   </body>
 </html>
 
 <style>
   .blog-post-title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 12px 0 10px;
-    line-height: 1.3;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.22;
+    letter-spacing: -0.03em;
   }
 
-  .blog-breadcrumb {
-    font-size: 12px;
-    color: #aaa;
-    margin-bottom: 32px;
+  html[data-theme="dark"] .blog-post-title { color: #e4e4e4; }
+
+  /* Blog一覧へ戻るリンク */
+  .blog-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #c0c0c0;
+    text-decoration: none !important;
+    border: none !important;
+    margin-bottom: 22px;
+    letter-spacing: 0.06em;
+    transition: color 0.15s;
   }
 
-  .blog-breadcrumb a { color: #aaa; }
-  .blog-breadcrumb a:hover { color: #555; }
+  .blog-back-link::after { display: none !important; }
+  .blog-back-link:hover { color: var(--primary); }
 
-  html[data-theme="dark"] .blog-breadcrumb,
-  html[data-theme="dark"] .blog-breadcrumb a { color: #555; }
-  html[data-theme="dark"] .blog-breadcrumb a:hover { color: #aaa; }
+  html[data-theme="dark"] .blog-back-link { color: #383838; }
+  html[data-theme="dark"] .blog-back-link:hover { color: var(--primary); }
 
-  html[data-theme="dark"] .blog-post-title { color: #e0e0e0; }
+  /* 読了時間 */
+  .blog-reading-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #bbb;
+    letter-spacing: 0.05em;
+  }
+
+  html[data-theme="dark"] .blog-reading-time { color: #444; }
 
   @media screen and (max-width: 768px) {
-    .blog-post-title { font-size: 1.5rem; }
+    .blog-post-title { font-size: 1.6rem; }
   }
 </style>
