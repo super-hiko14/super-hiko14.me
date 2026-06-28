@@ -1,11 +1,6 @@
-# Super Hiko14
-あああ。
+Astro web frameworkを使用したBlog/日記記録サイトです。
 
-ここは、遊び場。
-Super Hiko14が気ままに更新する、遊び場だ。
+気ままに適当に運営します。
 
-https://super-hiko14.me
-
----
-
-© 2026 Super Hiko14 All rights reserved.
+- [Blog](https://super-hiko14.me/blog/)
+- [Diary](https://super-hiko14.me/diary/)
