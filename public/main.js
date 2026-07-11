@@ -34,10 +34,10 @@
       if (link.hasAttribute('download')) return;
       var href = link.getAttribute('href');
       if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
-      
+
       // サブドメイン間移動対応: クッキーにフラグを立てる（ドメイン全体で共有）
       document.cookie = SK + "=1; path=/; domain=super-hiko14.com; max-age=10";
-      
+
       try { sessionStorage.setItem(SK, '1'); } catch(_) {}
     });
 
@@ -57,7 +57,7 @@
         }
       }
     } catch(_) {}
-    
+
     if (pending) {
       var bar = createBar();
       // 山形: 長い右上がりから 100% までスゾッと引き、その後フェード
@@ -83,14 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Site-wide hamburger navigation
   initSiteNav();
 
-  // About page tabs (?tab=overview/details/links)
-  initAboutTabs();
-  
   // Scroll to top functionality
   initScrollToTop();
-
-  // Misskey follower count
-  initMisskeyFollowers();
 
   const observerOptions = {
     root: null,
@@ -122,101 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, 100);
 
-  // Blog page functionality
-  if (document.body.classList.contains('blog-page')) {
-    initBlogPage();
-  }
-
-  // Diary page functionality
-  if (document.body.classList.contains('diary-page')) {
-    initDiaryPage();
-  }
-
   // Replace arrow characters with SVG
   initArrowReplacer();
 });
-
-function initAboutTabs() {
-  const tabs = document.querySelectorAll('.tab-item');
-  const contents = document.querySelectorAll('.tab-content');
-  if (!tabs.length || !contents.length || tabs.length !== contents.length) return;
-
-  const tabKeys = ['overview', 'details'];
-
-  function resolveTabIndex(rawTab) {
-    if (!rawTab) return 0;
-    const value = String(rawTab).trim().toLowerCase();
-
-    if (/^\d+$/.test(value)) {
-      const index = parseInt(value, 10);
-      return index >= 0 && index < tabKeys.length ? index : 0;
-    }
-
-    const aliases = {
-      overview: 0,
-      summary: 0,
-      gaiyou: 0,
-      '概要': 0,
-      details: 1,
-      detail: 1,
-      shosai: 1,
-      '詳細': 1
-    };
-
-    return aliases[value] ?? 0;
-  }
-
-  function applyTab(index, updateUrl) {
-    tabs.forEach((tab, i) => {
-      tab.classList.toggle('active', i === index);
-    });
-
-    contents.forEach((content, i) => {
-      content.classList.toggle('active', i === index);
-    });
-
-    if (updateUrl) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', tabKeys[index] || tabKeys[0]);
-      window.history.replaceState({}, '', url);
-    }
-  }
-
-  const initialTab = new URLSearchParams(window.location.search).get('tab');
-  applyTab(resolveTabIndex(initialTab), false);
-
-  tabs.forEach((tab, i) => {
-    tab.addEventListener('click', () => {
-      applyTab(i, true);
-    });
-  });
-
-  window.switchTab = (index) => {
-    const next = Number(index);
-    if (Number.isNaN(next) || next < 0 || next >= tabs.length) return;
-    applyTab(next, true);
-  };
-}
-
-function initDiaryPage() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = now.getDate();
-  const monthLabel = `${year}.${month}`;
-
-  document.querySelectorAll('.diary-month-group').forEach(group => {
-    const label = group.querySelector('.diary-month-label');
-    if (label && label.textContent.trim() === monthLabel) {
-      group.querySelectorAll('.diary-entry').forEach(entry => {
-        const dateEl = entry.querySelector('.diary-date');
-        if (dateEl && parseInt(dateEl.textContent.trim(), 10) === day) {
-          entry.classList.add('diary-today');
-        }
-      });
-    }
-  });
-}
 
 function initTheme() {
   // Theme toggle button
@@ -247,127 +149,6 @@ function initScrollToTop() {
       });
     });
   }
-}
-
-function initBlogPage() {
-  const blogList = document.getElementById('blog-list');
-  const noResults = document.getElementById('no-results');
-  const searchInput = document.getElementById('search-input');
-  const filterButtons = document.querySelectorAll('.filter-btn');
-  const sortButtons = document.querySelectorAll('.sort-btn');
-
-  let blogPosts = [];
-  let currentFilter = 'all';
-  let currentSort = 'desc';
-  let searchQuery = '';
-
-  // URLパラメータからカテゴリを取得
-  const urlParams = new URLSearchParams(window.location.search);
-  const categoryParam = urlParams.get('category');
-  if (categoryParam) {
-    currentFilter = categoryParam;
-    updateFilterButtons(currentFilter);
-  }
-
-  // JSONデータを取得
-  fetch('./posts.json')
-    .then(response => response.json())
-    .then(data => {
-      blogPosts = data;
-      renderBlogPosts();
-    })
-    .catch(error => {
-      console.error('Error loading blog posts:', error);
-      blogList.innerHTML = '<p>記事の読み込みに失敗しました。</p>';
-    });
-
-  function updateFilterButtons(filter) {
-    filterButtons.forEach(btn => {
-      if (btn.dataset.category === filter) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-  }
-
-  function updateCategoryUrl(category) {
-    const url = new URL(window.location);
-    if (category === 'all') {
-      url.searchParams.delete('category');
-    } else {
-      url.searchParams.set('category', category);
-    }
-    window.history.pushState({}, '', url);
-  }
-
-  function renderBlogPosts() {
-    let filteredPosts = [...blogPosts];
-
-    // カテゴリフィルター
-    if (currentFilter !== 'all') {
-      filteredPosts = filteredPosts.filter(post => post.category === currentFilter);
-    }
-
-    // 検索フィルター
-    if (searchQuery) {
-      filteredPosts = filteredPosts.filter(post => 
-        post.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // 並び替え
-    filteredPosts.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return currentSort === 'desc' ? dateB - dateA : dateA - dateB;
-    });
-
-    // 表示
-    if (filteredPosts.length === 0) {
-      blogList.innerHTML = '';
-      noResults.style.display = 'block';
-    } else {
-      noResults.style.display = 'none';
-      blogList.innerHTML = filteredPosts.map(post => {
-        const displayDate = post.date ? post.date.replace(/-/g, '.') : '';
-        return `
-        <a href="${post.url}" class="blog-item">
-          <div class="blog-item-header">
-            <h3 class="blog-item-title">${post.title}</h3>
-            <span class="blog-item-category">${post.category === 'diary' ? 'Diary' : 'Tech'}</span>
-          </div>
-          <div class="blog-item-date">${displayDate}</div>
-          <p class="blog-item-excerpt">${post.excerpt}</p>
-        </a>
-      `}).join('');
-    }
-  }
-
-  // イベントリスナー
-  filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const category = btn.dataset.category;
-      currentFilter = category;
-      updateFilterButtons(category);
-      updateCategoryUrl(category);
-      renderBlogPosts();
-    });
-  });
-
-  sortButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      sortButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentSort = btn.dataset.sort;
-      renderBlogPosts();
-    });
-  });
-
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    renderBlogPosts();
-  });
 }
 
 // Site-wide hamburger navigation
@@ -463,7 +244,7 @@ function initSiteNav() {
   backdrop.className = 'site-nav-backdrop';
   backdrop.setAttribute('aria-hidden', 'true');
   document.body.appendChild(backdrop);
-  
+
   // SVG arrow definitions
   const downArrowSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14"><path d="M 6 9 L 12 15 L 18 9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const rightArrowSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14"><path d="M 9 6 L 15 12 L 9 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -565,16 +346,18 @@ function initSiteNav() {
   /* ---------- current page highlight & accordion setup ---------- */
   try {
     const currentHost = location.hostname;
-    
+    const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
+    const currentPath = normalizePath(location.pathname);
+
     drawer.querySelectorAll('a[href]').forEach(link => {
       try {
         const linkUrl = new URL(link.href);
         const linkLi = link.closest('li');
         const arrowEl = link.querySelector('.site-nav-item-arrow');
-        
-        // Check if this is the current domain
-        const isCurrentDomain = linkUrl.hostname === currentHost;
-        
+
+        // Check if this link points to the current page (same domain AND same path)
+        const isCurrentDomain = linkUrl.hostname === currentHost && normalizePath(linkUrl.pathname) === currentPath;
+
         if (isCurrentDomain) {
           link.setAttribute('aria-current', 'page');
           // Change arrow to down arrow for current page
@@ -585,7 +368,7 @@ function initSiteNav() {
         } else {
           link.removeAttribute('aria-current');
         }
-        
+
         // Setup accordion for links with submenu
         const submenuEl = linkLi ? linkLi.querySelector('.site-nav-submenu') : null;
         if (submenuEl && arrowEl) {
@@ -701,25 +484,6 @@ function initSiteNav() {
   setTimeout(() => { nav.style.transition = 'none'; }, 580);
 }
 
-function initMisskeyFollowers() {
-  const statsEl = document.getElementById('misskey-stats');
-  const countEl = document.getElementById('misskey-followers');
-  if (!statsEl || !countEl) return;
-
-  const url = '/api/misskey?username=KokyuJene';
-  fetch(url)
-    .then((res) => {
-      if (!res.ok) return null;
-      return res.json();
-    })
-    .then((data) => {
-      if (!data || typeof data.followersCount !== 'number') return;
-      countEl.textContent = data.followersCount.toLocaleString('ja-JP');
-      statsEl.style.display = '';
-    })
-    .catch(function() {});
-}
-
 function initArrowReplacer() {
   const svgRight = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" style="vertical-align: middle; display: inline-block; width: 1.3em; height: 1.3em;"><path d="M426-342v-276l138 138-138 138Z"/></svg>`;
   const svgLeft  = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" style="vertical-align: middle; display: inline-block; width: 1.3em; height: 1.3em;"><path d="M534-342 396-480l138-138v276Z"/></svg>`;
@@ -727,11 +491,11 @@ function initArrowReplacer() {
   function replaceInNode(node) {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent;
-      
+
       if (text.includes('→') || text.includes('←')) {
         const parent = node.parentNode;
         if (!parent) return;
-        
+
         const ignoreTags = ['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'PRE', 'CODE', 'SVG'];
         if (ignoreTags.includes(parent.tagName) || parent.closest('.replaced-arrow-wrapper')) {
           return;
@@ -774,7 +538,7 @@ function initArrowReplacer() {
             fragment.appendChild(document.createTextNode(segment));
           }
         });
-        
+
         parent.replaceChild(fragment, node);
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {

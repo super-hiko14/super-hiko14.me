@@ -45,9 +45,15 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
     <main class="container blog-page">
       <!-- ヘッダー -->
       <div class="box">
+        <a href="https://super-hiko14.me/" class="back-home-link" aria-label="トップへ戻る">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          トップへ戻る
+        </a>
         <p class="page-eyebrow">super-hiko14.me/blog/</p>
-        <h1 class="title">Blog</h1>
-        <p class="sub-title">多分不定期更新</p>
+        <h1 class="title">ブログ</h1>
+        <p class="sub-title">Blog</p>
       </div>
 
       <!-- フィルター & 検索 -->
@@ -122,8 +128,8 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
           <nav class="footer-nav" aria-label="フッターナビゲーション">
             <div class="footer-nav-group">
               <span class="footer-nav-label">法的情報</span>
-              <a href="https://legal.super-hiko14.com/terms">利用規約</a>
-              <a href="https://legal.super-hiko14.com/privacypolicy">プライバシーポリシー</a>
+              <a href="https://super-hiko14.com/terms/">利用規約</a>
+              <a href="https://super-hiko14.com/privacypolicy/">プライバシーポリシー</a>
             </div>
           </nav>
           <div class="footer-controls">

@@ -1,4 +1,21 @@
-﻿<!DOCTYPE html>
+---
+const postModules = import.meta.glob('./blog/*.md', { eager: true });
+
+const posts = Object.entries(postModules)
+  .map(([filepath, mod]: [string, any]) => {
+    const slug = filepath.replace(/^\.\/blog\//, '').replace(/\.md$/, '');
+    return {
+      url: `/blog/${slug}/`,
+      title: mod.frontmatter?.title ?? slug,
+      date: mod.frontmatter?.date ?? '',
+    };
+  })
+  .sort((a, b) => (a.date > b.date ? -1 : 1));
+
+const latestPost = posts[0];
+---
+
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -27,12 +44,31 @@
   <main class="container">
     <div class="box">
       <p class="page-eyebrow">super-hiko14.me</p>
-      <h1 class="title">Welcome<span class="title-dot">.</span></h1>
-      <p class="sub-title">ようこそ</p>
-      
-      <div class="nav-buttons">
-        <a href="blog/" class="nav-button">Blog</a>
-        <a href="diary/" class="nav-button">Diary</a>
+      <h1 class="title">思ったことと、日々のこと</h1>
+      <p class="sub-title">Home</p>
+      <p class="description">
+        Super Hiko14の個人サイトです。<br>
+        真面目に考えたことは<a href="blog/">ブログ</a>に、<br>
+        どうでもいい日々のことは<a href="diary/">日記</a>にだらだら書いてます。
+      </p>
+
+      <div class="tool-list">
+        <a href="blog/" class="tool-item">
+          <div class="tool-item-inner">
+            <div class="tool-item-title">Blog</div>
+            <p class="tool-item-description">
+              {latestPost ? `最新: ${latestPost.title}` : '多分不定期更新'}
+            </p>
+          </div>
+          <span class="tool-item-arrow">→</span>
+        </a>
+        <a href="diary/" class="tool-item">
+          <div class="tool-item-inner">
+            <div class="tool-item-title">Diary</div>
+            <p class="tool-item-description">365日一行日記</p>
+          </div>
+          <span class="tool-item-arrow">→</span>
+        </a>
       </div>
     </div>
 
@@ -42,8 +78,8 @@
           <nav class="footer-nav" aria-label="フッターナビゲーション">
             <div class="footer-nav-group">
               <span class="footer-nav-label">法的情報</span>
-              <a href="https://legal.super-hiko14.com/terms">利用規約</a>
-              <a href="https://legal.super-hiko14.com/privacypolicy">プライバシーポリシー</a>
+              <a href="https://super-hiko14.com/terms/">利用規約</a>
+              <a href="https://super-hiko14.com/privacypolicy">プライバシーポリシー</a>
             </div>
           </nav>
           <div class="footer-controls">
@@ -66,4 +102,3 @@
   </main>
 </body>
 </html>
-
