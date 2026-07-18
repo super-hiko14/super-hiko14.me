@@ -339,34 +339,303 @@ html[data-theme="dark"] .scroll-icon-dark {
   transform: translateY(0);
 }
 
-/* ---------- カテゴリバッジ ---------- */
+/* ---------- カテゴリバッジ（一覧・記事ヘッダー共通） ---------- */
 .blog-item-category {
+  display: inline-block;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   white-space: nowrap;
-  padding: 3px 12px;
+  padding: 4px 14px;
   border-radius: 999px;
-  background: #1e1e1e;
-  color: #888;
+  background: var(--primary-bg);
+  color: var(--primary);
   flex-shrink: 0;
 }
 
 /* =============================================
-   ライトモード
+   Blog 一覧ページ
    ============================================= */
-@media (prefers-color-scheme: light) {
 
-  .blog-item-category {
-    background: #f0f0f0;
-    color: #666;
-    border-color: #e0e0e0;
-  }
-
+/* ---------- ページヘッダー ---------- */
+.title {
+  font-size: 2rem;
+  margin: 0;
 }
 
-/* ライトモード（data-theme属性） */
+.sub-title {
+  font-size: 1rem;
+  color: gray;
+  margin-top: 10px;
+}
 
-html[data-theme="light"] .blog-item-category { background: #f0f0f0; color: #666; border-color: #e0e0e0; }
+html[data-theme="dark"] .sub-title {
+  color: #777;
+}
+
+.page-eyebrow {
+  font-size: 0.8rem;
+  color: #aaa;
+  letter-spacing: 0.15em;
+  margin: 0 0 12px;
+  text-transform: lowercase;
+}
+
+html[data-theme="dark"] .page-eyebrow {
+  color: #555;
+}
+
+/* ---------- 戻るリンク（一覧「トップへ」・記事「Blog 一覧へ」共通） ---------- */
+.back-home-link,
+.blog-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #aaa;
+  text-decoration: none !important;
+  border: none !important;
+  margin: 0 0 14px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease;
+}
+
+.back-home-link::after,
+.blog-back-link::after {
+  display: none !important;
+}
+
+.back-home-link svg,
+.blog-back-link svg {
+  flex-shrink: 0;
+}
+
+.back-home-link:hover,
+.blog-back-link:hover {
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .back-home-link,
+html[data-theme="dark"] .blog-back-link {
+  color: #555;
+}
+
+html[data-theme="dark"] .back-home-link:hover,
+html[data-theme="dark"] .blog-back-link:hover {
+  color: var(--primary);
+}
+
+/* ---------- 検索・フィルター ---------- */
+.blog-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-box {
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 20px;
+  border: 2px solid var(--surface-hover);
+  border-radius: 999px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  background: var(--surface);
+  color: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.search-box input::placeholder {
+  color: #aaa;
+}
+
+html[data-theme="dark"] .search-box input::placeholder {
+  color: #555;
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  background: var(--surface);
+  color: inherit;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 25px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  font-family: inherit;
+}
+
+.filter-btn:hover {
+  background: var(--surface-hover);
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+html[data-theme="dark"] .filter-btn.active {
+  color: #030303;
+}
+
+/* ---------- タイムライン ---------- */
+.blog-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 8px;
+}
+
+.blog-entry {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "axis meta"
+    "line card";
+  position: relative;
+}
+
+.blog-entry-axis {
+  grid-area: axis;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.blog-axis-line--top {
+  width: 1px;
+  height: 16px;
+  background: #ddd;
+  flex-shrink: 0;
+}
+
+.blog-axis-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.4;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+}
+
+.blog-entry:has(.blog-item:hover) .blog-axis-dot {
+  opacity: 1;
+}
+
+.blog-entry-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  padding-top: 16px;
+}
+
+.blog-entry-date {
+  font-size: 12px;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  line-height: 12px;
+}
+
+html[data-theme="dark"] .blog-entry-date {
+  color: #555;
+}
+
+.blog-entry-line {
+  grid-area: line;
+  display: flex;
+  justify-content: center;
+  width: 40px;
+}
+
+.blog-axis-line--bottom {
+  width: 1px;
+  max-width: 1px;
+  background: #ddd;
+  flex: 1;
+  min-height: 24px;
+}
+
+html[data-theme="dark"] .blog-axis-line--top,
+html[data-theme="dark"] .blog-axis-line--bottom {
+  background: #222;
+}
+
+.blog-entry:first-child .blog-axis-line--top,
+.blog-entry:last-child .blog-axis-line--bottom {
+  background: transparent !important;
+}
+
+.blog-entry-card-wrap {
+  grid-area: card;
+  padding: 8px 0 24px 12px;
+}
+
+.blog-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 20px;
+  border-radius: 48px;
+  background: var(--surface);
+  text-decoration: none !important;
+  transition: background 0.2s ease;
+}
+
+.blog-item::after {
+  display: none !important;
+}
+
+.blog-item:hover {
+  background: var(--surface-hover);
+}
+
+.blog-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: inherit;
+  line-height: 1.45;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  margin-left: 10px;
+}
+
+.no-results {
+  font-size: 14px;
+  color: #888;
+  padding: 16px 0;
+}
+
+html[data-theme="dark"] .no-results {
+  color: #555;
+}
 
 /* =============================================
    レスポンシブ
@@ -375,6 +644,23 @@ html[data-theme="light"] .blog-item-category { background: #f0f0f0; color: #666;
 @media screen and (max-width: 768px) {
   .box {
     margin-bottom: 50vh;
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .blog-controls {
+    padding: 0 10px;
+  }
+
+  .filter-buttons {
+    width: 100%;
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: 80px;
   }
 
   .blog-content {
@@ -408,18 +694,66 @@ html[data-theme="light"] .blog-item-category { background: #f0f0f0; color: #666;
 
 }
 
-/* 読書プログレスバー */
+@media screen and (max-width: 480px) {
+  .blog-list {
+    padding-left: 0;
+  }
+
+  .blog-entry {
+    grid-template-columns: 32px 1fr;
+  }
+
+  .blog-entry-line {
+    width: 32px;
+  }
+
+  .blog-item {
+    border-radius: 24px;
+    padding: 14px 16px;
+    gap: 8px;
+  }
+
+  .blog-item-title {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .title {
+    font-size: 1.4rem;
+  }
+}
+
+/* 読書プログレスバー（#nav-progress と同じグラデーションで統一） */
 .blog-reading-progress {
   position: fixed;
   top: 0;
   left: 0;
   height: 2px;
   width: 0%;
-  background: linear-gradient(to right, var(--primary), transparent);
+  background: linear-gradient(90deg, #2d454d, #c2dfc5);
   z-index: 9999;
   transition: width 0.12s ease-out;
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.9;
+}
+
+/* アンカージャンプ時のスムーススクロール */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* モーション低減設定を尊重 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* -----------------------------------------------
@@ -432,6 +766,14 @@ html[data-theme="light"] .blog-item-category { background: #f0f0f0; color: #666;
   line-height: 1.95;
   letter-spacing: 0.01em;
   word-break: break-word;
+}
+
+/* アンカージャンプ時に見出しが画面上端に張り付かないように */
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4 {
+  scroll-margin-top: 28px;
 }
 
 /* 見出し h1 */
@@ -614,6 +956,50 @@ html[data-theme="dark"] .blog-content a:hover {
   font-size: 0.875rem;
 }
 
+/* コードブロック コピーボタン（JSで挿入） */
+.code-copy-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.code-copy-btn svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.blog-content pre:hover .code-copy-btn,
+.code-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .code-copy-btn {
+    opacity: 0.6;
+  }
+}
+
+.code-copy-btn:hover,
+.code-copy-btn.is-copied {
+  background: var(--primary-bg);
+  color: var(--primary);
+  opacity: 1;
+}
+
 /* インラインコード */
 .blog-content :not(pre) > code {
   background: var(--surface);
@@ -726,9 +1112,11 @@ html[data-theme="dark"] .blog-content blockquote::before {
   margin: 4px 0 28px;
 }
 
-/* テーブル */
+/* テーブル（幅が足りない場合は横スクロール） */
 .blog-content table {
+  display: block;
   width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   margin: 0 0 28px;
   font-size: 0.9rem;
@@ -759,10 +1147,53 @@ html[data-theme="dark"] .blog-content blockquote::before {
   text-align: left;
 }
 
+/* 記事上部の戻るリンク行（本文カラムと同じ 720px 中央揃え） */
+.blog-post-topbar {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.blog-post-topbar .blog-back-link {
+  margin-bottom: 22px;
+}
+
 .blog-post-header {
   max-width: 720px;
   margin: 0 auto 32px;
   text-align: left;
+}
+
+.blog-post-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
+}
+
+html[data-theme="dark"] .blog-post-title {
+  color: #e4e4e4;
+}
+
+@media screen and (max-width: 768px) {
+  .blog-post-title {
+    font-size: 1.6rem;
+  }
+}
+
+/* 読了時間 */
+.blog-reading-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #bbb;
+  letter-spacing: 0.05em;
+}
+
+html[data-theme="dark"] .blog-reading-time {
+  color: #444;
 }
 
 .blog-post-meta {
@@ -770,20 +1201,6 @@ html[data-theme="dark"] .blog-content blockquote::before {
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
-}
-
-.blog-post-header .blog-item-category {
-  display: inline-block;
-  background: var(--primary-bg);
-  color: var(--primary);
-  border: none;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 4px 14px;
-  border-radius: 999px;
-  flex-shrink: 0;
 }
 
 .blog-post-header .blog-item-date {
@@ -795,9 +1212,11 @@ html[data-theme="dark"] .blog-content blockquote::before {
 
 html[data-theme="dark"] .blog-post-header .blog-item-date { color: #3a3a3a; }
 
+/* 本文カラムを中央に置き、左右を対称にすることで
+   ヘッダー（中央寄せ 720px）と本文の位置を完全に一致させる */
 .blog-post-layout {
   display: grid;
-  grid-template-columns: 1fr 720px 220px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 720px) minmax(0, 1fr);
   column-gap: 32px;
   width: 100%;
   position: relative;
@@ -811,6 +1230,7 @@ html[data-theme="dark"] .blog-post-header .blog-item-date { color: #3a3a3a; }
 
 .toc-sidebar {
   grid-column: 3;
+  justify-self: start;
   position: sticky;
   top: 24px;
   align-self: start;
@@ -827,7 +1247,8 @@ html[data-theme="dark"] .blog-post-header .blog-item-date { color: #3a3a3a; }
 
 .toc-sidebar::-webkit-scrollbar { display: none; }
 
-@media screen and (max-width: 1100px) {
+/* サイドバー(220px)が左右対称に収まらない幅ではフローティング目次に切替 */
+@media screen and (max-width: 1325px) {
   .blog-page .blog-post-box {
     width: min(1100px, 96vw);
   }
@@ -840,7 +1261,7 @@ html[data-theme="dark"] .blog-post-header .blog-item-date { color: #3a3a3a; }
     display: none !important;
   }
   .toc-mobile-btn {
-    display: block !important;
+    display: flex !important;
   }
 }
 
@@ -1129,19 +1550,10 @@ html[data-theme="dark"] .blog-post-footer {
   border-top-color: #191919;
 }
 
-.blog-back-btn {
-  color: #bbb;
-  font-size: 0.85rem;
-  letter-spacing: 0.03em;
-  transition: color 0.2s;
+/* 記事フッター内の戻るリンクは余白なし（上部と同じ .blog-back-link を使用） */
+.blog-post-footer .blog-back-link {
+  margin: 0;
 }
-
-.blog-back-btn::after { display: none !important; }
-
-.blog-back-btn:hover { color: var(--primary); }
-
-html[data-theme="dark"] .blog-back-btn { color: #404040; }
-html[data-theme="dark"] .blog-back-btn:hover { color: var(--primary); }
 
 /* -----------------------------------------------
    Blog — 前後記事ナビ
@@ -1170,14 +1582,32 @@ html[data-theme="dark"] .blog-back-btn:hover { color: var(--primary); }
 
 .blog-sibling:hover { background: var(--surface-hover); }
 
-.blog-sibling--next { text-align: right; }
+/* 前は左カラム・次は右カラムに固定（片方しか無くても位置が揃う） */
+.blog-sibling--prev { grid-column: 1; }
+.blog-sibling--next {
+  grid-column: 2;
+  text-align: right;
+}
 
 .blog-sibling-dir {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.7rem;
   color: var(--primary);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.blog-sibling--next .blog-sibling-dir {
+  justify-content: flex-end;
+}
+
+.blog-sibling-dir svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
 .blog-sibling-title {
@@ -1205,8 +1635,15 @@ html[data-theme="dark"] .blog-sibling-date { color: #444; }
   .blog-sibling-nav {
     grid-template-columns: 1fr;
   }
+  .blog-sibling--prev,
+  .blog-sibling--next {
+    grid-column: 1;
+  }
   .blog-sibling--next {
     text-align: left;
+  }
+  .blog-sibling--next .blog-sibling-dir {
+    justify-content: flex-start;
   }
 }
 

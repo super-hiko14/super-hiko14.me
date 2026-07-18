@@ -25,11 +25,17 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blog — Super Hiko14.me</title>
     <meta name="description" content="Super Hiko14のブログです。" />
+    <link rel="canonical" href="https://super-hiko14.me/blog/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Blog — Super Hiko14.me" />
+    <meta property="og:description" content="Super Hiko14のブログです。" />
+    <meta property="og:url" content="https://super-hiko14.me/blog/" />
+    <meta property="og:site_name" content="Super Hiko14.me" />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="https://super-hiko14.me/favicon.ico" />
     <link rel="icon" type="image/png" href="https://super-hiko14.me/favicon.png" />
-    <link rel="stylesheet" href="https://super-hiko14.com/main.css" />
-    <link rel="canonical" href="https://super-hiko14.com/blog/" />
-    <script src="https://super-hiko14.com/main.js"></script>
+    <link rel="stylesheet" href="/main.css" />
+    <script src="/main.js" is:inline></script>
   </head>
 
   <body>
@@ -65,6 +71,7 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
               id="blog-search"
               placeholder="記事を検索..."
               autocomplete="off"
+              aria-label="記事を検索"
             />
           </div>
           <div class="filter-buttons" role="group" aria-label="カテゴリフィルター">
@@ -72,6 +79,7 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
               <button
                 class:list={['filter-btn', cat === 'All' && 'active']}
                 data-category={cat}
+                aria-pressed={cat === 'All' ? 'true' : 'false'}
               >
                 {cat}
               </button>
@@ -185,8 +193,12 @@ const categories = ['All', ...new Set(posts.map((p) => p.category).filter(Boolea
 
       filterBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
-          filterBtns.forEach((b) => b.classList.remove('active'));
+          filterBtns.forEach((b) => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
           btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
           activeCategory = btn.dataset.category ?? 'All';
           applyFilters();
         });
